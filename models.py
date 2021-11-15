@@ -1,6 +1,6 @@
-from pydantic import BaseModel, create_model
-from typing import List, Optional
-
+from pydantic import BaseModel, create_model, Field
+from typing import Any, List, Optional
+from decimal import Decimal
 
 class SubCategory(BaseModel):
     ID: Optional[str] 
@@ -16,6 +16,7 @@ class Category(BaseModel):
 
 
 class Product(BaseModel):
+    guidEsId: str
     itemName: str
     itemShortDesc: Optional[str]
     producerName: str
@@ -44,6 +45,18 @@ class Instruction(BaseModel):
     overDosage: str
     sideEffect: str
     rowTs: int
+
+
+class Price(BaseModel):
+    xmlId: str = Field(description="Код товар")
+    price: Decimal = Field(description="Протековская цена")
+    priceOld: Optional[Decimal] = Field(description="Старая протековская цена")
+    maxQuantity: Optional[int] = Field(description="Доступное количество")
+    DATE_UPDATE: str
+    spDiscountPrice: Optional[Any] = Field(description="Цена с учетом скидок SP")
+    priceTypeId: str = Field(description="Недокументировано")
+    itemGroup: Optional[List[int]]  = Field(description="Недокументировано")
+    prDelivery: int = Field(description="Недокументировано")
 
 
 # RESPONSE MODELS
@@ -76,3 +89,11 @@ class RegionsResponse(BaseResponseModel):
 
 class InstructionsResponse(BaseResponseModel):
     data: List[Instruction]
+
+
+class SubPriceResponse(BaseModel):
+    items: List[Price]
+
+
+class PriceResponse(BaseModel):
+    data: SubPriceResponse

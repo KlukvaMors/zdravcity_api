@@ -1,11 +1,11 @@
 from typing import Dict, List, Type
 
 import requests
-from os import getenv
+from os import getenv, path
 from pydantic import parse_obj_as
 from dotenv import load_dotenv
 
-from models import CategoriesResponse, InstructionsResponse, ProductsResponse, RegionsResponse
+from models import CategoriesResponse, InstructionsResponse, PriceResponse, ProductsResponse, RegionsResponse
 from exceptions import  ApiException, HttpCodeException, API_EXCEPTIONS
 
 load_dotenv()
@@ -70,22 +70,35 @@ class ZdravcityAPI:
     def get_categories(self) -> CategoriesResponse:
         return self.__api_method("/api.client/getCategoryList/", CategoriesResponse)
 
-    def get_products(self, start=0, count=1) -> ProductsResponse:
-        return self.__api_method("/api.client/obtainEsEima/", ProductsResponse, {"start": start, "count":count})
+    def get_products(self, start: int=0, count: int=1) -> ProductsResponse:
+        return self.__api_method(
+            path="/api.client/obtainEsEima/",
+            return_type=ProductsResponse,
+            params={"start": start, "count": count})
 
     def get_regions(self) -> RegionsResponse:
         return self.__api_method("/api.client/getRegionList/", RegionsResponse)
 
-    def get_instructions(self, guid: str, start=0, count=1) -> InstructionsResponse:
+    def get_instructions(self, guid: str, start: int=0, count: int=1) -> InstructionsResponse:
         return self.__api_method(
             path="/api.client/obtainEsInstructionEima/",
             return_type=InstructionsResponse,
             params={"start": start, "count": count, "guidInstruction": guid})
 
-
+    def get_prices(self, region_code: str, categories: List[str]) -> PriceResponse:
+        """Получение цен и остатков по активным позициям из справочника товара """
+        return self.__api_method(
+            path="/api.client/getPrices/",
+            return_type=PriceResponse,
+            params={"region_code": region_code, "show": categories}
+        )
 
 
 if __name__ == "__main__":
     api = ZdravcityAPI(getenv("ZDRAVCITY_TOKEN"))
-    result = api.get_instructions()
+    result = api.get_prices(region_code="vladimir", categories=["igly-i-shpritsy"])
     print(result)
+    # prices_response = api.get_prices(region_code="vladimir", categories=["igly-i-shpritsy"])
+    # length_response = len(prices_response.data.items)
+    # print(length_response)
+    # 

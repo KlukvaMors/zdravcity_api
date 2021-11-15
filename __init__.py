@@ -1,0 +1,1 @@
+from zdravcity import ZdravcityAPI

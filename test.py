@@ -23,11 +23,31 @@ class TestZdravcityAPI(TestCase):
         print(length_response)
         self.assertGreater(length_response, 0)
     
-    def test_1(self):
+    def test_link_product_and_instruction(self):
         """Получение инструкции по guid"""
 
         products = self.api.get_products(start=0, count=1)
         i = self.api.get_instructions(products.data[0].guidInstruction)
-        self.assertGreater(len(i.data), 0, "Instruction not found")
+        self.assertGreater(len(i.data), 0, "Instructions list is empty")
+
+    
+    def test_get_regions(self):
+        must_be = ['vladimir', 'vologda', 'Moscowregion', 'barnaul']
+        regions_response = self.api.get_regions()
+        regions = regions_response.data.regions
+        self.assertGreater(len(regions), 0, "Regions list is empty")
+        region_codes = list(map(lambda r: r.CODE, regions))
+        for require in must_be:
+            self.assertIn(require, region_codes, f'Required word "{require}" not found')
+
+    def test_get_categories(self):
+        must_be = ['lekarstvennye-preparaty', 'bad', 'meditsinskie-izdeliya', 'medtekhnika', 'gigiena', 'kosmetika', 'sport-i-dieta']
+        categories_response = self.api.get_categories()
+        categories = categories_response.data.CATEGORIES
+        self.assertGreater(len(categories), 0, "Categories list is empty")
+        category_codes = list(map(lambda c: c.CODE, categories))
+        for require in must_be:
+            self.assertIn(require, category_codes, f'Required word "{require}" not found')
+
 
     

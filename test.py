@@ -1,12 +1,19 @@
 from unittest import TestCase
 from zdravcity import ZdravcityAPI
+from exceptions import IncorrectTokenException
 from os import getenv
 
 class TestZdravcityAPI(TestCase):
 
     def setUp(self):
         self.api = ZdravcityAPI(token=getenv("ZDRAVCITY_TOKEN"), test=True)
+        self.bad_api = ZdravcityAPI(token="foobuzz", test=True)
 
+
+    def test_exception_token(self):
+
+        with self.assertRaises(IncorrectTokenException):
+            self.bad_api.get_products()
     
     def test_1(self):
         """Получение инструкции по guid"""

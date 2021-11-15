@@ -70,7 +70,7 @@ class ZdravcityAPI:
     def get_categories(self) -> CategoriesResponse:
         return self.__api_method("/api.client/getCategoryList/", CategoriesResponse)
 
-    def get_products(self, start, count) -> ProductsResponse:
+    def get_products(self, start=0, count=1) -> ProductsResponse:
         return self.__api_method("/api.client/obtainEsEima/", ProductsResponse, {"start": start, "count":count})
 
     def get_regions(self) -> RegionsResponse:

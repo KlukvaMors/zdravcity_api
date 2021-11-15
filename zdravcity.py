@@ -3,47 +3,43 @@ from typing import Dict, List, Type
 import requests
 from os import getenv
 from pydantic import parse_obj_as
+from dotenv import load_dotenv
 
 from models import CategoriesResponse, InstructionsResponse, ProductsResponse, RegionsResponse
 from exceptions import  ApiException, HttpCodeException, API_EXCEPTIONS
 
+load_dotenv()
 
 class ZdravcityAPI:
     """
     Оболочка над API Zdravcity.ru
     """
 
-    HOST = getenv("ZDRAVCITY_HOST", "https://zdravcity.ru")
-    HOST_TEST = getenv("ZDRAVCITY_TEST_HOST", "https://bitrix-dev-cloud.zdravcity.ru")
-
-    HEADERS_TEST = {
-        'CF-Access-Client-Id': 'e270ececa4fbbb357bdfc6335b426189.access',
-        'CF-Access-Client-Secret': '79b2de2d3e54f5509f5fbea515891293d0484b54309000096c170e9ec4362628',
-        'Authorization': 'Basic bmV3X21vdXNlOjczNzM1MDA=',
-    }
-
-    HEADERS = {
-        'Cookie': 'BITRIX_SM_ABTEST_s1=1%7CB; BITRIX_SM_OLD_FAVORITES_CHECKED=Y; PHPSESSID=2l1jo8ppfpk52b94c6cffkqmd9',
-        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:87.0) Gecko/20100101 Firefox/87.0",
-    }
-
     def __init__(self, token: str, test: bool = True):
         self.__token = token
         self.__test = test
+        self.__host = getenv("ZDRAVCITY_TEST_HOST") if test else getenv("ZDRAVCITY_HOST")
 
-    def __prepare_request(self, path: str, payload: Dict) -> requests.Response:
-        headers = self.HEADERS.copy()
-        if self.__test:
-            headers.update(self.HEADERS_TEST)
-        
+        self.__headers = {
+            'Cookie': 'BITRIX_SM_ABTEST_s1=1%7CB; BITRIX_SM_OLD_FAVORITES_CHECKED=Y; PHPSESSID=2l1jo8ppfpk52b94c6cffkqmd9',
+            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:87.0) Gecko/20100101 Firefox/87.0",
+        }
+        if test:
+            self.__headers.update({
+                'CF-Access-Client-Id': getenv('ZDRAVCITY_CF_Access_Client_Id'),
+                'CF-Access-Client-Secret': getenv('ZDRAVCITY_CF_Access_Client_Secret'),
+                'Authorization': getenv('ZDRAVCITY_Authorization'),
+            })   
+
+
+    def __send_request(self, path: str, payload: Dict) -> requests.Response:
+
         payload = {
             "token": self.__token,
             ** payload
         }
 
-        host = self.HOST_TEST if self.__test else self.HOST
-
-        return requests.post(f"{host}{path}", headers=headers, json=payload)
+        return requests.post(f"{self.__host}{path}", headers=self.__headers, json=payload)
 
     def __check_http_code_ok(self, response: requests.Response):
         if 200 >= response.status_code < 300:
@@ -65,7 +61,7 @@ class ZdravcityAPI:
         raise ApiException(json_payload["message"])
 
     def __api_method(self, path: str, return_type: Type, params: Dict = {}):
-        response = self.__prepare_request(path, params)
+        response = self.__send_request(path, params)
         self.__check_http_code_ok(response)
         json_payload = response.json()
         self.__check_error(json_payload)
@@ -87,6 +83,6 @@ class ZdravcityAPI:
 
 
 if __name__ == "__main__":
-    api = ZdravcityAPI("a3e68bab0ce536152ab9ea85ce8ecaac")
+    api = ZdravcityAPI(getenv("ZDRAVCITY_TOKEN"))
     result = api.get_instructions()
     print(result)

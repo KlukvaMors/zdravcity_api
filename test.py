@@ -9,4 +9,10 @@ class TestZdravcityAPI(TestCase):
 
     
     def test_1(self):
+        """Получение инструкции по guid"""
+
         products = self.api.get_products(start=0, count=1)
+        i = self.api.get_instructions(products.data[0].guidInstruction)
+        self.assertGreater(len(i.data), 0, "Instruction not found")
+
+    

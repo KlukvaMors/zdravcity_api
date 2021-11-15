@@ -76,8 +76,11 @@ class ZdravcityAPI:
     def get_regions(self) -> RegionsResponse:
         return self.__api_method("/api.client/getRegionList/", RegionsResponse)
 
-    def get_instructions(self, start=0, count=1) -> InstructionsResponse:
-        return self.__api_method("/api.client/obtainEsInstructionEima/", InstructionsResponse, {"start": start, "count": count})
+    def get_instructions(self, guid: str, start=0, count=1) -> InstructionsResponse:
+        return self.__api_method(
+            path="/api.client/obtainEsInstructionEima/",
+            return_type=InstructionsResponse,
+            params={"start": start, "count": count, "guidInstruction": guid})
 
 
 

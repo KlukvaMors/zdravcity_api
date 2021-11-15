@@ -11,6 +11,7 @@ class TestZdravcityAPI(TestCase):
 
 
     def test_exception_token(self):
+        """Проверка поднятия исключения при некоррктном токене"""
 
         with self.assertRaises(IncorrectTokenException):
             self.bad_api.get_products()

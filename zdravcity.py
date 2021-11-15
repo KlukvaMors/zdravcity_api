@@ -1,7 +1,8 @@
-from typing import Dict, List, Type
+from typing import Callable, Dict, List, Type
+from os import getenv, path
+from inspect import signature
 
 import requests
-from os import getenv, path
 from pydantic import parse_obj_as
 from dotenv import load_dotenv
 
@@ -9,6 +10,7 @@ from models import CategoriesResponse, InstructionsResponse, PriceResponse, Prod
 from exceptions import  ApiException, HttpCodeException, API_EXCEPTIONS
 
 load_dotenv()
+
 
 class ZdravcityAPI:
     """
@@ -29,52 +31,38 @@ class ZdravcityAPI:
                 'CF-Access-Client-Id': getenv('ZDRAVCITY_CF_Access_Client_Id'),
                 'CF-Access-Client-Secret': getenv('ZDRAVCITY_CF_Access_Client_Secret'),
                 'Authorization': getenv('ZDRAVCITY_Authorization'),
-            })   
-
-
-    def __send_request(self, path: str, payload: Dict) -> requests.Response:
-
-        payload = {
-            "token": self.__token,
-            ** payload
-        }
-
-        return requests.post(f"{self.__host}{path}", headers=self.__headers, json=payload)
-
-    def __check_http_code_ok(self, response: requests.Response):
-        if 200 >= response.status_code < 300:
-            return
-
-        if 400 >= response.status_code < 600:
-            raise HttpCodeException(f"Response status code: {response.status_code}")
-
-        raise HttpCodeException("Unknown HTTP exception")
-
-    def __check_error(self, json_payload):
-        if not json_payload["status"]:
-            return
-
-        for exception in API_EXCEPTIONS:
-            if json_payload['status'] == exception.STATUS:
-                raise exception
-
-        raise ApiException(json_payload["message"])
+            })
 
     def __api_method(self, path: str, return_type: Type, params: Dict = {}):
-        response = self.__send_request(path, params)
-        self.__check_http_code_ok(response)
-        json_payload = response.json()
-        self.__check_error(json_payload)
-        return parse_obj_as(return_type, json_payload)
+        payload =  dict(token=self.__token)
+        payload.update(params)
+        
+        response = requests.post(f"{self.__host}{path}", headers=self.__headers, json=payload)
+
+        if not (200 >= response.status_code < 300):
+            raise HttpCodeException(f"Response status code: {response.status_code}")
+
+        json_response = response.json()
+
+        if json_response['status'] != 0:
+            for exception in API_EXCEPTIONS:
+                if json_response['status'] == exception.STATUS:
+                    raise exception
+
+        
+        return parse_obj_as(return_type, json_response)
+
 
     def get_categories(self) -> CategoriesResponse:
         return self.__api_method("/api.client/getCategoryList/", CategoriesResponse)
+
 
     def get_products(self, start: int=0, count: int=1) -> ProductsResponse:
         return self.__api_method(
             path="/api.client/obtainEsEima/",
             return_type=ProductsResponse,
-            params={"start": start, "count": count})
+            params={'start': start, 'count': count}
+        )
 
     def get_regions(self) -> RegionsResponse:
         return self.__api_method("/api.client/getRegionList/", RegionsResponse)
@@ -83,7 +71,8 @@ class ZdravcityAPI:
         return self.__api_method(
             path="/api.client/obtainEsInstructionEima/",
             return_type=InstructionsResponse,
-            params={"start": start, "count": count, "guidInstruction": guid})
+            params={'guidInstruction': guid, 'start': start, 'count': count}
+        )
 
     def get_prices(self, region_code: str, categories: List[str]) -> PriceResponse:
         """Получение цен и остатков по активным позициям из справочника товара """
@@ -96,7 +85,7 @@ class ZdravcityAPI:
 
 if __name__ == "__main__":
     api = ZdravcityAPI(getenv("ZDRAVCITY_TOKEN"))
-    result = api.get_prices(region_code="vladimir", categories=["igly-i-shpritsy"])
+    result = api.get_products()
     print(result)
     # prices_response = api.get_prices(region_code="vladimir", categories=["igly-i-shpritsy"])
     # length_response = len(prices_response.data.items)

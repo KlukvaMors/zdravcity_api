@@ -6,7 +6,7 @@ import requests
 from pydantic import parse_obj_as
 from dotenv import load_dotenv
 
-from models import CategoriesResponse, InstructionsResponse, PriceResponse, ProductsResponse, RegionsResponse
+from models import CategoriesResponse, InstructionsResponse, PriceResponse, ProductsResponse, RegionsResponse, SearchResponse
 from exceptions import  ApiException, HttpCodeException, API_EXCEPTIONS
 
 load_dotenv()
@@ -83,9 +83,17 @@ class ZdravcityAPI:
         )
 
 
+    def search_all(self, word: str, where: str = "NAME", region_code: str = "vladimir" ) -> SearchResponse:
+        return self.__api_method(
+            path="/api.client/getSearchResultAll/",
+            return_type=SearchResponse,
+            params={"region_code": region_code, "word": word, "where": where}
+        )
+
+
 if __name__ == "__main__":
     api = ZdravcityAPI(getenv("ZDRAVCITY_TOKEN"))
-    result = api.get_products()
+    result = api.search_all("аспирин", region_code="vladimir")
     print(result)
     # prices_response = api.get_prices(region_code="vladimir", categories=["igly-i-shpritsy"])
     # length_response = len(prices_response.data.items)

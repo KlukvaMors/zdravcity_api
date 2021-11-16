@@ -49,5 +49,26 @@ class TestZdravcityAPI(TestCase):
         for require in must_be:
             self.assertIn(require, category_codes, f'Required word "{require}" not found')
 
+    def test_search_all(self):
+        word = "аспирин"
+        mnn = "ацетилсалициловая кислота"
+        search_response = self.api.search_all(word, region_code="vladimir")
+        search = search_response.data.items
+        self.assertGreater(len(search), 0, "Search result return nothing")
+        for item in search:
+            self.assertIn(word, item.NAME.lower(), f"Not found word {word} in {item.NAME}")
+            self.assertIn(mnn, item.MNN.lower(), f"Not found mnn {mnn} in {item.MNN}")
 
-    
+
+    def test_search_by_mnn(self):
+        word = "аспирин"
+        mnn = "ацетилсалициловая кислота"
+        search_response = self.api.search_all(mnn, where="MNN", region_code="vladimir")
+        search = search_response.data.items
+        self.assertGreater(len(search), 0, "Search result return nothing")
+        for item in search:
+            expr = mnn in item.MNN.lower() or item.MNN.lower() == '~'
+            self.assertTrue(expr, f"Not found mnn {mnn} in {item.MNN}")
+
+        batch = [word in i.NAME.lower() for i in search]
+        self.assertTrue(any(batch), f"Must be word {word}")

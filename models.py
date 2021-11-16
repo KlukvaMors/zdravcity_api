@@ -59,6 +59,24 @@ class Price(BaseModel):
     prDelivery: int = Field(description="Недокументировано")
 
 
+class Search(BaseModel):
+    XML_ID: str
+    NAME: str
+    MADE: str
+    COUNTRY: str
+    MNN: str
+    RECIPE: bool
+    PROPERTY_BESTSELLER_VALUE: Optional[str]
+    PROPERTY_NOVELTY_VALUE: Optional[str]
+    PROPERTY_RECIPE_VALUE: Optional[str]
+    RATING: int
+    PRICE_TYPE_ID: Optional[str]
+    OLD_PRICE: Optional[str]
+    PRICE: Optional[str]
+    IMAGE: str
+    IMAGE_BIG: str
+    
+
 # RESPONSE MODELS
 
 
@@ -95,5 +113,13 @@ class SubPriceResponse(BaseModel):
     items: List[Price]
 
 
-class PriceResponse(BaseModel):
+class PriceResponse(BaseResponseModel):
     data: SubPriceResponse
+
+
+class SubSearchResponse(BaseModel):
+    items: List[Search]
+
+
+class SearchResponse(BaseResponseModel):
+    data: SubSearchResponse
